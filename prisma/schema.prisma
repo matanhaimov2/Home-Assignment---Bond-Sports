@@ -13,7 +13,7 @@ datasource db {
 
 model Account {
   accountId            Int           @id @default(autoincrement())
-  personId             Int
+  personId             Int           @unique
   balance              Float         @default(0)
   dailyWithdrawalLimit Float
   activeFlag           Boolean       @default(true)
