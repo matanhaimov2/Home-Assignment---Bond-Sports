@@ -114,24 +114,33 @@ describe('TransactionsService', () => {
   });
 
   describe('transfer', () => {
+    // Should successfully perform an internal transfer when both accounts are active and have sufficient funds
     it('should successfully transfer money between accounts', async () => {
-      // Setup: The command will succeed
+      // Define the Mock to return a valid account for each search
+      mockPrisma.account.findUnique.mockResolvedValue({
+        accountId: 1,
+        activeFlag: true,
+        balance: 100,
+        dailyWithdrawalLimit: 1000,
+      });
+
+      // Define the update that will succeed
       mockPrisma.account.update.mockResolvedValue({
         accountId: 1,
-        balance: 100,
+        balance: 50,
       });
 
       const transferData = { fromAccountId: 1, toAccountId: 2, amount: 50 };
 
       const result = await service.transfer(transferData);
 
-      // Check that 2 updates were made (one for source, one for destination)
+      // Tests
       expect(mockPrisma.account.update).toHaveBeenCalledTimes(2);
-      // Check that 2 transactions were created (in/out)
       expect(mockPrisma.transaction.createMany).toHaveBeenCalled();
       expect(result).toBeDefined();
     });
 
+    // Should reject the transfer if the sender has insufficient funds
     it('should throw BadRequestException if account balance is insufficient', async () => {
       mockPrisma.account.update.mockRejectedValueOnce(
         new BadRequestException('Insufficient funds'),

@@ -126,9 +126,19 @@ export class TransactionsService {
       const fromAccount = await tx.account.findUnique({
         where: { accountId: dto.fromAccountId },
       });
-
       if (!fromAccount || !fromAccount.activeFlag) {
         throw new BadRequestException('Source account not found or inactive');
+      }
+
+      // Check destination account
+      const toAccount = await tx.account.findUnique({
+        where: { accountId: dto.toAccountId },
+      });
+      if (!toAccount) {
+        throw new NotFoundException('Destination account not found');
+      }
+      if (!toAccount.activeFlag) {
+        throw new BadRequestException('Destination account is inactive');
       }
 
       if (fromAccount.balance < dto.amount) {
