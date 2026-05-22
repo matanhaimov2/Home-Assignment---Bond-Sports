@@ -11,6 +11,7 @@ import { GetStatementDto } from './dto/get-statement.dto';
 import { TransactionsService } from './transactions.service';
 import { DepositDto } from './dto/deposit.dto';
 import { WithdrawDto } from './dto/withdraw.dto';
+import { TransferMoneyDto } from './dto/transfer-money.dto';
 
 @Controller('transactions')
 export class TransactionsController {
@@ -32,5 +33,10 @@ export class TransactionsController {
     @Query() filters: GetStatementDto,
   ) {
     return this.transactionsService.getStatement(accountId, filters);
+  }
+
+  @Post('transfer')
+  async transfer(@Body() transferMoneyDto: TransferMoneyDto) {
+    return await this.transactionsService.transfer(transferMoneyDto);
   }
 }

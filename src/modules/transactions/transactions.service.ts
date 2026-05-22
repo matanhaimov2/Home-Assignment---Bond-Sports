@@ -8,6 +8,7 @@ import { DepositDto } from './dto/deposit.dto';
 import { WithdrawDto } from './dto/withdraw.dto';
 import { GetStatementDto } from './dto/get-statement.dto';
 import { Prisma } from '@prisma/client';
+import { TransferMoneyDto } from './dto/transfer-money.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -110,6 +111,76 @@ export class TransactionsService {
     return this.prisma.transaction.findMany({
       where,
       orderBy: { transactionDate: 'desc' },
+    });
+  }
+
+  async transfer(dto: TransferMoneyDto) {
+    if (dto.fromAccountId === dto.toAccountId) {
+      throw new BadRequestException(
+        'Cannot transfer money to the same account',
+      );
+    }
+
+    return await this.prisma.$transaction(async (tx) => {
+      // Check source account and balance
+      const fromAccount = await tx.account.findUnique({
+        where: { accountId: dto.fromAccountId },
+      });
+
+      if (!fromAccount || !fromAccount.activeFlag) {
+        throw new BadRequestException('Source account not found or inactive');
+      }
+
+      if (fromAccount.balance < dto.amount) {
+        throw new BadRequestException('Insufficient balance');
+      }
+
+      // Check daily withdrawal limit (treat transfer as withdrawal)
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const totalOutToday = await tx.transaction.aggregate({
+        where: {
+          accountId: dto.fromAccountId,
+          type: { in: ['WITHDRAWAL', 'TRANSFER_OUT'] },
+          transactionDate: { gte: startOfDay },
+        },
+        _sum: { value: true },
+      });
+
+      const currentOut = Math.abs(totalOutToday._sum.value || 0);
+      if (currentOut + dto.amount > fromAccount.dailyWithdrawalLimit) {
+        throw new BadRequestException('Daily withdrawal limit exceeded');
+      }
+
+      // Update accounts
+      await tx.account.update({
+        where: { accountId: dto.fromAccountId },
+        data: { balance: { decrement: dto.amount } },
+      });
+
+      await tx.account.update({
+        where: { accountId: dto.toAccountId },
+        data: { balance: { increment: dto.amount } },
+      });
+
+      // Record transactions
+      await tx.transaction.createMany({
+        data: [
+          {
+            accountId: dto.fromAccountId,
+            value: -dto.amount,
+            type: 'TRANSFER_OUT',
+          },
+          {
+            accountId: dto.toAccountId,
+            value: dto.amount,
+            type: 'TRANSFER_IN',
+          },
+        ],
+      });
+
+      return { message: 'Transfer successful' };
     });
   }
 }

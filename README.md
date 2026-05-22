@@ -61,3 +61,4 @@ Once the server is running, navigate to /api in your browser. The documentation 
 - **POST** `/transactions/deposit` - Securely add funds.
 - **POST** `/transactions/withdraw` - Withdraw funds with daily limit enforcement.
 - **GET** `/transactions/:accountId/statement` - Retrieve history with date-range filtering.
+- **POST** `/transactions/transfer` - (Bonus) Securely transfer funds between two accounts using atomic transactions.

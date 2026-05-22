@@ -14,6 +14,7 @@ describe('TransactionsService', () => {
     },
     transaction: {
       create: jest.fn(),
+      createMany: jest.fn(),
       aggregate: jest.fn(),
       findMany: jest.fn(),
     },
@@ -21,6 +22,7 @@ describe('TransactionsService', () => {
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TransactionsService,
@@ -108,6 +110,38 @@ describe('TransactionsService', () => {
 
       const result = await service.getStatement(1, {});
       expect(result).toHaveLength(1);
+    });
+  });
+
+  describe('transfer', () => {
+    it('should successfully transfer money between accounts', async () => {
+      // Setup: The command will succeed
+      mockPrisma.account.update.mockResolvedValue({
+        accountId: 1,
+        balance: 100,
+      });
+
+      const transferData = { fromAccountId: 1, toAccountId: 2, amount: 50 };
+
+      const result = await service.transfer(transferData);
+
+      // Check that 2 updates were made (one for source, one for destination)
+      expect(mockPrisma.account.update).toHaveBeenCalledTimes(2);
+      // Check that 2 transactions were created (in/out)
+      expect(mockPrisma.transaction.createMany).toHaveBeenCalled();
+      expect(result).toBeDefined();
+    });
+
+    it('should throw BadRequestException if account balance is insufficient', async () => {
+      mockPrisma.account.update.mockRejectedValueOnce(
+        new BadRequestException('Insufficient funds'),
+      );
+
+      const transferData = { fromAccountId: 1, toAccountId: 2, amount: 999999 };
+
+      await expect(service.transfer(transferData)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });
