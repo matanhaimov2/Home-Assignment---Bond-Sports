@@ -6,6 +6,8 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { DepositDto } from './dto/deposit.dto';
 import { WithdrawDto } from './dto/withdraw.dto';
+import { GetStatementDto } from './dto/get-statement.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class TransactionsService {
@@ -80,6 +82,34 @@ export class TransactionsService {
           type: 'WITHDRAWAL',
         },
       });
+    });
+  }
+
+  async getStatement(accountId: number, filters: GetStatementDto) {
+    // Check if the account exists
+    const account = await this.prisma.account.findUnique({
+      where: { accountId },
+    });
+
+    if (!account) throw new NotFoundException('Account not found');
+
+    // Define the where object with the correct Prisma type to avoid ESLint errors
+    const where: Prisma.TransactionWhereInput = {
+      accountId: accountId,
+    };
+
+    if (filters.startDate || filters.endDate) {
+      const dateFilter: Prisma.DateTimeFilter = {};
+
+      if (filters.startDate) dateFilter.gte = new Date(filters.startDate);
+      if (filters.endDate) dateFilter.lte = new Date(filters.endDate);
+
+      where.transactionDate = dateFilter;
+    }
+
+    return this.prisma.transaction.findMany({
+      where,
+      orderBy: { transactionDate: 'desc' },
     });
   }
 }

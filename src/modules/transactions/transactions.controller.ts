@@ -1,4 +1,13 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  Query,
+  ParseIntPipe,
+} from '@nestjs/common';
+import { GetStatementDto } from './dto/get-statement.dto';
 import { TransactionsService } from './transactions.service';
 import { DepositDto } from './dto/deposit.dto';
 import { WithdrawDto } from './dto/withdraw.dto';
@@ -15,5 +24,13 @@ export class TransactionsController {
   @Post('withdraw')
   async withdraw(@Body() withdrawDto: WithdrawDto) {
     return this.transactionsService.withdraw(withdrawDto);
+  }
+
+  @Get(':accountId/statement')
+  async getStatement(
+    @Param('accountId', ParseIntPipe) accountId: number,
+    @Query() filters: GetStatementDto,
+  ) {
+    return this.transactionsService.getStatement(accountId, filters);
   }
 }
