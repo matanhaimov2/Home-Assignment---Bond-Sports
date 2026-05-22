@@ -20,28 +20,18 @@ This project provides a reliable REST API for financial account management. It f
 ## 🚦 Getting Started
 1. Prerequisites
 - Docker & Docker Compose installed.
-- Node.js (v18+)
 
-2. Setup
+2. Setup & Run
 ```bash
 git clone https://github.com/matanhaimov2/Home-Assignment---Bond-Sports.git
-npm install
+cd Home-Assignment---Bond-Sports
+docker-compose up --build
 ```
-**Note**: Ensure that your local ports (3000 for the app, 5432 for Postgres) are not occupied by other services before running the Docker containers.
+**Note**: Ensure that ports 3000 (for the app) and 5432 (for Postgres) are available on your machine
 
-```bash
-docker-compose up -d
-npx prisma db push
-```
-
-3. Running the App
-```bash
-npm run start:dev
-```
-
-The API is accessible at: http://localhost:3000
-
-**Swagger API Documentation**: http://localhost:3000/api
+3. Access
+- **API**: http://localhost:3000
+- **Swagger API Documentation**: http://localhost:3000/api
 
 ## 🧪 Running Tests
 To execute the unit tests (no DB connection required):

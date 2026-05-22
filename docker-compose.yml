@@ -4,9 +4,14 @@ services:
     container_name: bond_sports_db
     restart: always
     environment:
-      POSTGRES_USER: user
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: bank_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bank_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     ports:
       - "5432:5432"
     volumes:
@@ -18,10 +23,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: "postgresql://user:password@db:5432/bank_db?schema=public"
+      DATABASE_URL: "postgresql://postgres:password@db:5432/bank_db?schema=public"
       PORT: 3000
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:

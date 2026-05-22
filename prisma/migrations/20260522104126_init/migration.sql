@@ -8,7 +8,8 @@ CREATE TABLE "accounts" (
     "accountType" INTEGER NOT NULL,
     "createDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "accounts_pkey" PRIMARY KEY ("accountId")
+    CONSTRAINT "accounts_pkey" PRIMARY KEY ("accountId"),
+    CONSTRAINT "accounts_personId_key" UNIQUE ("personId")
 );
 
 -- CreateTable
