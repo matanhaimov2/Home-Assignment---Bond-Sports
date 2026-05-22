@@ -4,10 +4,33 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Account {
+  accountId            Int           @id @default(autoincrement())
+  personId             Int
+  balance              Float         @default(0)
+  dailyWithdrawalLimit Float
+  activeFlag           Boolean       @default(true)
+  accountType          Int           // 1 = Checking, 2 = Savings
+  createDate           DateTime      @default(now())
+  transactions         Transaction[]
+
+  @@map("accounts")
+}
+
+model Transaction {
+  transactionId   Int      @id @default(autoincrement())
+  accountId       Int
+  account         Account  @relation(fields: [accountId], references: [accountId])
+  value           Float
+  type            String   // DEPOSIT or WITHDRAWAL
+  transactionDate DateTime @default(now())
+
+  @@map("transactions")
 }
